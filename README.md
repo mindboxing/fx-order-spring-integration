@@ -5,6 +5,7 @@ This project is for training the usage of spring integration.
 ## Setup MongoDB
 This project comes with docker-compose.
 MongoDB will require setup of database and user.
+Please look at (mongodb.md)[./docs/mongodb.md] for setting it up
 
 ## Java 1.5
 Yeah, I'm exploring the unknown.
