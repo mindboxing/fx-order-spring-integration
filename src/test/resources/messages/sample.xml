@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:order xmlns:ns2="https://skunkworks/fx">
+    <ordertId>969a14b4-69fa-4947-879c-13756617a61a</ordertId>
+    <create>2020-12-15T21:24:59Z</create>
+    <ccyPair>USDJPY</ccyPair>
+    <amount>100000</amount>
+    <position>BUY</position>
+    <type>LIMIT</type>
+    <price>1.121</price>
+    <accountId>00000000-0000-0000-0000-000000000000</accountId>
+</ns2:order>

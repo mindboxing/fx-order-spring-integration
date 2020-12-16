@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="https://skunkworks/fx"
+           xmlns="https://skunkworks/fx"
+>
+    <xs:element name="order">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="ordertId" type="uuid"/>
+                <xs:element name="create" type="xs:dateTime"/>
+                <xs:element name="ccyPair" type="xs:string"/>
+                <xs:element name="amount" type="xs:integer"/>
+                <xs:element name="position" type="position"/>
+                <xs:element name="type" type="type"/>
+                <xs:element name="price" type="xs:decimal"/>
+                <xs:element name="accountId" type="uuid"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:simpleType name="type">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="STOP"/>
+            <xs:enumeration value="LIMIT"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="position">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="BUY"/>
+            <xs:enumeration value="SELL"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="uuid">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" />
+        </xs:restriction>
+    </xs:simpleType>
+
+</xs:schema>
