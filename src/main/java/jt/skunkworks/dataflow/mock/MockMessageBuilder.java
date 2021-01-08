@@ -14,7 +14,9 @@ import static javax.xml.bind.JAXB.marshal;
 import static jt.skunkworks.fx.Position.BUY;
 import static jt.skunkworks.fx.Type.LIMIT;
 
-public class FxMessageBuilder {
+public class MockMessageBuilder {
+
+    public final static String ACCOUNT_ID = "00000000-0000-0000-0000-000000000000";
 
     private BigInteger amount = new BigInteger("100000");;
     private String ccyPair = "USDJPY";
@@ -22,34 +24,34 @@ public class FxMessageBuilder {
     private BigDecimal price = new BigDecimal("1.121");
     private Type type = LIMIT;
     private String orderId = UUID.randomUUID().toString();
-    private String accountId = UUID.randomUUID().toString();
+    private String accountId = ACCOUNT_ID;
 
-    public FxMessageBuilder amount(BigInteger amount) {
+    public MockMessageBuilder amount(BigInteger amount) {
         this.amount = amount;
         return this;
     }
 
-    public FxMessageBuilder ccyPair(String ccyPair) {
+    public MockMessageBuilder ccyPair(String ccyPair) {
         this.ccyPair = ccyPair;
         return this;
     }
 
-    public FxMessageBuilder position(Position position) {
+    public MockMessageBuilder position(Position position) {
         this.position = position;
         return this;
     }
 
-    public FxMessageBuilder price(BigDecimal price) {
+    public MockMessageBuilder price(BigDecimal price) {
         this.price = price;
         return this;
     }
 
-    public FxMessageBuilder type(Type type) {
+    public MockMessageBuilder type(Type type) {
         this.type = type;
         return this;
     }
 
-    public FxMessageBuilder accountId(String accountId) {
+    public MockMessageBuilder accountId(String accountId) {
         this.accountId = accountId;
         return this;
     }
@@ -62,7 +64,7 @@ public class FxMessageBuilder {
 
     public Order buildOrder() {
         var orderDetail = new Order();
-        orderDetail.setOrdertId(orderId);
+        orderDetail.setOrderId(orderId);
         orderDetail.setAmount(amount);
         orderDetail.setCcyPair(ccyPair);
         orderDetail.setPosition(position);
@@ -70,7 +72,7 @@ public class FxMessageBuilder {
         orderDetail.setType(type);
         orderDetail.setAccountId(accountId);
         orderDetail.setCreate(ZonedDateTime.now());
-        orderDetail.setOrdertId(UUID.randomUUID().toString());
+        orderDetail.setOrderId(orderId);
         return orderDetail;
     }
 

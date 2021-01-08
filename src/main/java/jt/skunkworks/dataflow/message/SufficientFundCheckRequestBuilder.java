@@ -1,11 +1,16 @@
-package jt.skunkworks.dataflow.service.client;
+package jt.skunkworks.dataflow.message;
 
-import jt.skunkworks.dataflow.message.FxOrder;
+import jt.skunkworks.dataflow.mock.MockMessageBuilder;
+import jt.skunkworks.fx.Order;
 
 public class SufficientFundCheckRequestBuilder {
-    private FxOrder order;
+    private final Order order;
 
-    public SufficientFundCheckRequestBuilder(FxOrder order) {
+    public SufficientFundCheckRequestBuilder() {
+        this(new MockMessageBuilder().buildOrder());
+    }
+
+    public SufficientFundCheckRequestBuilder(Order order) {
         this.order = order;
     }
 

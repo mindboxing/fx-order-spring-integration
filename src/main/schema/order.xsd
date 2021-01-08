@@ -6,7 +6,7 @@
     <xs:element name="order">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="ordertId" type="uuid"/>
+                <xs:element name="orderId" type="uuid"/>
                 <xs:element name="create" type="xs:dateTime"/>
                 <xs:element name="ccyPair" type="xs:string"/>
                 <xs:element name="amount" type="xs:integer"/>

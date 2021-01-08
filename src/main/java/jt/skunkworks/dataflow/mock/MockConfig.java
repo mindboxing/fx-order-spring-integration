@@ -1,10 +1,8 @@
 package jt.skunkworks.dataflow.mock;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jt.skunkworks.dataflow.message.FxOrder;
-import jt.skunkworks.dataflow.service.FxOrderTransformer;
-import jt.skunkworks.dataflow.service.client.SufficientFundCheckRequest;
-import jt.skunkworks.dataflow.service.client.SufficientFundCheckRequestBuilder;
+import jt.skunkworks.dataflow.message.SufficientFundCheckRequest;
+import jt.skunkworks.dataflow.message.SufficientFundCheckRequestBuilder;
 import jt.skunkworks.fx.Order;
 import lombok.SneakyThrows;
 import org.mockserver.integration.ClientAndServer;
@@ -37,10 +35,9 @@ public class MockConfig {
 
     @SneakyThrows
     private void mock(ClientAndServer clientAndServer, ObjectMapper objectMapper, String accountId, String result) {
-        FxMessageBuilder builder = new FxMessageBuilder();
+        MockMessageBuilder builder = new MockMessageBuilder();
         Order order = builder.accountId(accountId).buildOrder();
-        FxOrder fxOrder = new FxOrderTransformer().transform(order);
-        SufficientFundCheckRequest request = new SufficientFundCheckRequestBuilder(fxOrder).build();
+        SufficientFundCheckRequest request = new SufficientFundCheckRequestBuilder(order).build();
         String json = objectMapper.writeValueAsString(request);
 
         clientAndServer.when(request()

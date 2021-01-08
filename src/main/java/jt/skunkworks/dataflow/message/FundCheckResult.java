@@ -1,4 +1,4 @@
-package jt.skunkworks.dataflow.service.client;
+package jt.skunkworks.dataflow.message;
 
 public enum FundCheckResult {
     APPROVED,

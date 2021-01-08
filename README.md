@@ -23,7 +23,8 @@ There is also a unit test MessageFlowConfigTest.java
 [ ] UT: The message is receive as XML message from fx.in.
 [DONE] the message will be persist    
 [ ] UT: the message will be persist
- [] Idempotent Receiver
+[DONE] Idempotent Receiver
+[ ] UT: Idempotent Receiver
 
 ### Convert
 [DONE] It will be map to normalized data.
