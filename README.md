@@ -20,27 +20,18 @@ There is also a unit test MessageFlowConfigTest.java
 ## Responsibility
 ### Consume 
 [DONE] The message is receive as XML message from fx.in.
-[ ] UT: The message is receive as XML message from fx.in.
+[DONE] UT: The message is receive as XML message from fx.in.
 [DONE] the message will be persist    
 [ ] UT: the message will be persist
 [DONE] Idempotent Receiver
 [ ] UT: Idempotent Receiver
 
-### Convert
-[DONE] It will be map to normalized data.
- [] UT
-
 ### Process
 [DONE] It will validate that the RT position sufficiently funded.
-[] UT
-[DONE] It will enrich with fund flag as true or false.
-[] UT
 
 ### Route
 [DONE] When fund flag is false, create ORDER_REJECTED and publish to fx.event
-[] UT
 [DONE] When fund flag is false, create ORDER_ACCEPTED and publish to fx.event
-[] UT
 
 ### Record
 [] It persists consumed XML.
@@ -52,16 +43,11 @@ There is also a unit test MessageFlowConfigTest.java
 [DONE] On fail validation, it publishes ORDER_REJECTED event.
 
 ### Error Handling
-[] Connection issue with fund-service
-    [DONE] Retryable : SocketTimeoutException
-[] Fund-service - 400
-    [] Log
-[] Fund-service - 500
-    [] Log
-[] Bad XML
-    [] Log
-[] Bad Data
-    [] Log
+[DONE] Retryable : SocketTimeoutException
+[DONE] Log + DLQ
+
+### Non-Biz
+[ ] Integration Test
 
 ## Interaction
 

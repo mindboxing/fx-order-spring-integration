@@ -8,6 +8,8 @@ import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.MessageHandlerSpec;
 import org.springframework.integration.dsl.MessageProducerSpec;
 
+import static org.springframework.integration.handler.LoggingHandler.Level.ERROR;
+
 @Configuration
 public class BoundaryFlowConfig {
 
@@ -31,13 +33,10 @@ public class BoundaryFlowConfig {
     }
 
     @Bean
-    public IntegrationFlow deadLetterMessageFlow(
-            @Qualifier("amqpDlqAdapter") MessageHandlerSpec<?, ?> amqpDlqAdapter
-    ) {
-        return IntegrationFlows.from("deadLetterQueue")
-                .handle((m, h) -> {
-                    return m;
-                })
+    public IntegrationFlow errorChannelFlow(@Qualifier("amqpDlqAdapter") MessageHandlerSpec<?, ?> amqpDlqAdapter) {
+        return IntegrationFlows
+                .from("errorChannel")
+                .log(ERROR, "APP-ERROR")
                 .handle(amqpDlqAdapter)
                 .get();
     }

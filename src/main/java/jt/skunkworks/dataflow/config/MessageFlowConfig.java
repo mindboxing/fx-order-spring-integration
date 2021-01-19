@@ -13,7 +13,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.Transformers;
-import org.springframework.integration.handler.LoggingHandler;
 import org.springframework.integration.handler.advice.RequestHandlerRetryAdvice;
 import org.springframework.integration.http.dsl.Http;
 import org.springframework.integration.xml.transformer.UnmarshallingTransformer;
@@ -35,7 +34,12 @@ public class MessageFlowConfig {
                         .headerExpression("accountId", "payload.accountId")
                         .headerExpression("orderId", "payload.orderId")
                 )
-                .gateway("fundSufficientCheck.input", c -> c.errorChannel("errorChannel"))
+                .gateway("fundSufficientCheck.input", c ->
+                        c.errorChannel("errorChannel")
+                        .replyTimeout(2000L)
+                        .requestTimeout(2000L)
+
+                )
                 .<SufficientFundCheckResponse>handle((resp, header) -> {
                     return new Event(header.get("orderId").toString(),
                             resp.getResult() == FundCheckResult.APPROVED
@@ -65,15 +69,5 @@ public class MessageFlowConfig {
                         c -> c.advice(retryAdvice)
                 )
                 ;
-    }
-
-
-    @Bean
-    public IntegrationFlow error() {
-        return IntegrationFlows
-                .from("errorChannel")
-                .log(LoggingHandler.Level.ERROR, "APP-ERROR")
-                .channel("deadLetterQueue")
-                .get();
     }
 }

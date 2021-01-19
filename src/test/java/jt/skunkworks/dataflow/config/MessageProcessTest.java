@@ -14,6 +14,7 @@ import org.mockserver.model.RequestDefinition;
 import org.mockserver.verify.VerificationTimes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -26,10 +27,18 @@ import org.springframework.integration.json.JsonToObjectTransformer;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessagingException;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+
+import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeUnit;
 
 import static jt.skunkworks.dataflow.util.TestUtil.mockFundSufficientCheck;
 import static jt.skunkworks.dataflow.util.TestUtil.mockFundSufficientCheckResponse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockserver.model.HttpResponse.response;
 
 @SpringJUnitConfig
@@ -38,11 +47,19 @@ import static org.mockserver.model.HttpResponse.response;
 public class MessageProcessTest {
 
     @Autowired
-    @Qualifier("test.input")
+    @Qualifier("process.input")
     private MessageChannel input;
+
     @Autowired
     @Qualifier("test.output")
     private QueueChannel output;
+
+    @Autowired
+    @Qualifier("test.error")
+    private QueueChannel error;
+
+    @Autowired
+    private ApplicationContext context;
 
     @AfterEach
     void tearDown(MockServerClient client) {
@@ -58,9 +75,9 @@ public class MessageProcessTest {
         input.send(MessageBuilder.withPayload(TestUtil.testPayload()).build());
 
         Message<?> receive = output.receive(500L);
-        Assertions.assertNotNull(receive);
-        Event event = (Event)receive.getPayload();
-        Assertions.assertEquals(Event.EventType.ORDER_ACCEPTED,  event.getType());
+        assertNotNull(receive);
+        Event event = (Event) receive.getPayload();
+        assertEquals(Event.EventType.ORDER_ACCEPTED, event.getType());
     }
 
     @Test
@@ -72,9 +89,9 @@ public class MessageProcessTest {
         input.send(MessageBuilder.withPayload(TestUtil.testPayload()).build());
 
         Message<?> receive = output.receive(500L);
-        Assertions.assertNotNull(receive);
-        Event event = (Event)receive.getPayload();
-        Assertions.assertEquals(Event.EventType.ORDER_REJECTED,  event.getType());
+        assertNotNull(receive);
+        Event event = (Event) receive.getPayload();
+        assertEquals(Event.EventType.ORDER_REJECTED, event.getType());
     }
 
     @Test
@@ -85,19 +102,53 @@ public class MessageProcessTest {
 
         input.send(MessageBuilder.withPayload(TestUtil.testPayload()).build());
 
+        Message<?> receive = output.receive(2000L);
+        Assertions.assertNull(receive);
+        client.verify(request, VerificationTimes.once());
+        Message<?> errorMsg = error.receive(1000L);
+        assertNotNull(errorMsg);
+        MessagingException errorMsgPayload = (MessagingException) errorMsg.getPayload();
+        HttpClientErrorException cause = (HttpClientErrorException) errorMsgPayload.getCause().getCause();
+        assertEquals(400, cause.getRawStatusCode());
+    }
+
+    @Test
+    @DisplayName("REST call fundSufficientCheck result in 500")
+    void fundSufficientCheckInternalServerError(MockServerClient client) {
+        RequestDefinition request = mockFundSufficientCheck();
+        client.when(request).respond(response().withStatusCode(500).withBody(""));
+
+        input.send(MessageBuilder.withPayload(TestUtil.testPayload()).build());
+
         Message<?> receive = output.receive(500L);
         Assertions.assertNull(receive);
         client.verify(request, VerificationTimes.once());
+        Message<?> errorMsg = error.receive(500L);
+        assertNotNull(errorMsg);
+        MessagingException errorMsgPayload = (MessagingException) errorMsg.getPayload();
+        HttpServerErrorException cause = (HttpServerErrorException) errorMsgPayload.getCause().getCause();
+        assertEquals(500, cause.getRawStatusCode());
     }
 
-//    @Test
-    @DisplayName("REST call fundSufficientCheck result in 500")
-    void fundSufficientCheckInternalServerError() {
-        Assertions.fail();
-    }
+    @Test
+    @DisplayName("REST call fundSufficientCheck result in SocketTimeoutException")
+    void fundSufficientCheckInternalRetry(MockServerClient client) {
+        RequestDefinition request = mockFundSufficientCheck();
+        client.when(request)
+                .respond(
+                        mockFundSufficientCheckResponse(200, "INSUFFICIENT")
+                                .withDelay(TimeUnit.MILLISECONDS, 2700)
+                );
 
-    void fundSufficientCheckInternalRetry() {
-        Assertions.fail();
+        input.send(MessageBuilder.withPayload(TestUtil.testPayload()).build());
+
+        Message<?> receive = output.receive(11000L);
+        client.verify(request, VerificationTimes.exactly(3));
+        Message<?> errorMsg = error.receive(500L);
+        assertNotNull(errorMsg);
+        MessagingException errorMsgPayload = (MessagingException) errorMsg.getPayload();
+        SocketTimeoutException cause = (SocketTimeoutException) errorMsgPayload.getCause().getCause().getCause();
+        assertEquals("Read timed out", cause.getMessage());
     }
 
 
@@ -106,12 +157,19 @@ public class MessageProcessTest {
     @Import({MessageFlowConfig.class, MiscConfig.class})
     static class Config {
 
-        @Bean
-        public IntegrationFlow testInbound() {
-            return IntegrationFlows
-                    .from(MessageChannels.queue("test.input"))
-                    .channel("process.input")
-                    .get();
+        @Bean("process.input")
+        public MessageChannel processInputChanel() {
+            return MessageChannels.publishSubscribe().get();
+        }
+
+        @Bean("test.output")
+        public QueueChannel testOutputChannel() {
+            return MessageChannels.queue().get();
+        }
+
+        @Bean("test.error")
+        public QueueChannel testErrorhannel() {
+            return MessageChannels.queue().get();
         }
 
         @Bean
@@ -119,7 +177,15 @@ public class MessageProcessTest {
             return IntegrationFlows
                     .from("process.output")
                     .transform(new JsonToObjectTransformer(Event.class))
-                    .channel(MessageChannels.queue("test.output"))
+                    .channel("test.output")
+                    .get();
+        }
+
+        @Bean
+        public IntegrationFlow testDeadLetter() {
+            return IntegrationFlows
+                    .from("errorChannel")
+                    .channel("test.error")
                     .get();
         }
     }
