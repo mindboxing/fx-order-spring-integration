@@ -35,6 +35,7 @@ import static jt.skunkworks.dataflow.mock.MockMessageBuilder.ACCOUNT_ID;
 import static jt.skunkworks.dataflow.util.TestUtil.*;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Awaitility.with;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.amqp.core.MessageBuilder.withBody;
 
 @Tag("integration")
@@ -65,15 +66,11 @@ public class IntegrationTest {
                 withBody(builder.build().getBytes()).build());
 
 
-        Message<?> receive = with().pollDelay(400, TimeUnit.MILLISECONDS)
-                .await()
-                .atMost(2, TimeUnit.SECONDS)
-                .until(() -> result.receive(0), Objects::nonNull)
-                ;
+        Message<?> receive = result.receive(2000L);
         Assertions.assertNotNull(receive);
         Event payload = (Event) receive.getPayload();
-        Assertions.assertEquals(builder.getOrderId(), payload.getAggregateId());
-        Assertions.assertEquals(Event.EventType.ORDER_ACCEPTED, payload.getType());
+        assertEquals(builder.getOrderId(), payload.getAggregateId());
+        assertEquals(Event.EventType.ORDER_ACCEPTED, payload.getType());
     }
 
     @Configuration
